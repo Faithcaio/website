@@ -81,8 +81,8 @@ const seasonalShapes = {
     ]
 };
 
-const currentColors = seasonalColors[currentSeason];
-const currentShapes = seasonalShapes[currentSeason];
+let currentColors = seasonalColors[currentSeason];
+let currentShapes = seasonalShapes[currentSeason];
 
 
 const particles = [];
@@ -104,6 +104,13 @@ class Particle {
             this.element.remove();
             return;
         }
+
+        while (this.element.firstChild) {
+            this.element.removeChild(this.element.firstChild);
+        }
+        const svg = createSvgElement(currentShapes, currentColors);
+        this.element.appendChild(svg);
+
         this.x = Math.random() * (window.innerWidth - 50);
         this.y = -10 - Math.random() * 30; // Start above the viewport
         this.rotation = Math.random() * 360;
@@ -218,11 +225,8 @@ function round(n, p = 0) {
     return Math.round(n * Math.pow(10, p)) / Math.pow(10, p);
 }
 
-function createParticle() {
-    const particleElement = document.createElement('div');
-    particleElement.className = 'particle';
-
-    const shape = currentShapes[Math.floor(Math.random() * currentShapes.length)];
+function createSvgElement(shapes, colors) {
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
 
     // Create SVG element
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -243,12 +247,12 @@ function createParticle() {
     // Add gradient stops
     const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
     stop1.setAttribute('offset', '0%');
-    let randomColor1 = currentColors[Math.floor(Math.random() * currentColors.length)];
+    let randomColor1 = colors[Math.floor(Math.random() * colors.length)];
     stop1.setAttribute('stop-color', randomColor1);
 
     const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
     stop2.setAttribute('offset', '100%');
-    let randomColor2 = currentColors[Math.floor(Math.random() * currentColors.length)];
+    let randomColor2 = colors[Math.floor(Math.random() * colors.length)];
     stop2.setAttribute('stop-color', randomColor2);
 
     gradient.appendChild(stop1);
@@ -263,11 +267,15 @@ function createParticle() {
     path.setAttribute('stroke', randomColor1);
 
     svg.appendChild(path);
-    particleElement.appendChild(svg);
-    document.body.appendChild(particleElement);
+    return svg;
+}
 
-    // Create particle instance and add to array
+function spawnParticle() {
+    const particleElement = document.createElement('div');
+    particleElement.className = 'particle';
+
     const particle = new Particle(particleElement);
+    document.body.appendChild(particleElement);
     particles.push(particle);
 
     // Add event listeners
@@ -290,7 +298,7 @@ function fillupParticles() {
         console.log(`Spawning ${targetParticleCount - startCount} particles`)
         for (let i = startCount; i < targetParticleCount; i++) {
             const jitter = Math.random() * spawnIntervalJitter;
-            setTimeout(createParticle, jitter);
+            setTimeout(spawnParticle, jitter);
         }
     }
     setTimeout(fillupParticles, spawnIntervalJitter + 10)
@@ -358,3 +366,39 @@ function onClickParticle(e, particle) {
     document.addEventListener('mouseup', stopDragging);
     document.addEventListener('mouseleave', stopDragging);
 }
+
+// Track last keys pressed for season detection
+let keyBuffer = '';
+
+function handleKey(e) {
+    const resetBuffer = () => {
+        setTimeout(() => {
+            if (keyBuffer.length > 0) keyBuffer = '';
+        }, 1500); // Reset buffer after 1.5 seconds of inactivity
+    };
+
+    if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+        keyBuffer += e.key.toLowerCase();
+        resetBuffer();
+        // Check if buffer matches any season name
+        const matchedSeason = Object.keys(seasonMap).find(season =>
+            season.startsWith(keyBuffer)
+        );
+
+        if (matchedSeason && keyBuffer === matchedSeason) {
+            if (currentSeason !== matchedSeason) {
+                currentSeason = matchedSeason;
+                currentColors = seasonalColors[currentSeason];
+                currentShapes = seasonalShapes[currentSeason];
+                console.log(`Changed to ${currentSeason} season`);
+            }
+            keyBuffer = ''; // Reset buffer after successful match
+        } else if (!matchedSeason) {
+            keyBuffer = ''; // Reset buffer if no matching season
+        }
+    } else if (e.key === 'Escape') {
+        keyBuffer = ''; // Clear buffer on escape
+    }
+}
+
+document.addEventListener('keydown',  handleKey);
