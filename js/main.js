@@ -1,4 +1,18 @@
-const currentSeason = 'summer';
+const today = new Date();
+const month = today.getMonth();
+const seasonMap = {
+    spring: [2, 3, 4], // March, April, May
+    summer: [5, 6, 7], // June, July, August
+    autumn: [8, 9, 10], // September, October, November
+    winter: [11, 0, 1] // December, January, February
+};
+let currentSeason;
+for (const [season, seasonMonths] of Object.entries(seasonMap)) {
+    if (seasonMonths.includes(month)) {
+        currentSeason = season;
+        break;
+    }
+}
 const particleCounts = {
     spring: 15,
     summer: 20,
@@ -180,8 +194,8 @@ class Particle {
         }
 
         // Apply transformations using CSS custom properties for better performance
-        this.element.style.setProperty('--x', Math.round(this.x));
-        this.element.style.setProperty('--y', Math.round(this.y));
+        this.element.style.setProperty('--x', `${Math.round(this.x)}px`);
+        this.element.style.setProperty('--y', `${Math.round(this.y)}px`);
         this.element.style.setProperty('--opacity', Math.round(this.opacity * 1000) / 1000);
         this.element.style.setProperty('--rotation', `${Math.round(this.rotation)}deg`);
         this.element.style.setProperty('--scale', Math.round(this.scale * 1000) / 1000);

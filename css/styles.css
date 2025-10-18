@@ -4,10 +4,8 @@ body {
     background:
             linear-gradient(to bottom,
                                 #0a0a1a 0%,
-                                #1a1a3a 70%,
-                                #1a1a3a 75%,
+                                #1a1a3a 79%,
                                 #0a2a1a 80%,
-                                #0a1a0a 82%,
                                 #0a1a0a 100%);
     color: rgb(64, 188, 0);
     text-shadow: 0 0 1px black;
@@ -32,6 +30,12 @@ h1, p {
     user-select: none;
 }
 
+.content {
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+}
+
 .particle {
     border-radius: 20px;
     width: 40px;
@@ -44,22 +48,22 @@ h1, p {
     --opacity: 1;
 
     position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -10;
-    will-change: transform, opacity;
+    left: var(--x);
+    top: var(--y);
+    z-index: 10;
+    will-change: transform, opacity, left, top;
     cursor: grab;
     transform:
-        translate3d(
-            calc(var(--x, 0) * 1px),
-            calc(var(--y, 0) * 1px),
-            0)
-        translate(-50%, -50%)
+        /*translate3d(*/
+        /*    calc(var(--x, 0) * 1px),*/
+        /*    calc(var(--y, 0) * 1px),*/
+        /*    0)*/
+        /*translate(-50%, -50%)*/
         rotate(var(--rotation))
         scale(var(--scale));
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-    transform-origin: center;
+    /*transform-style: preserve-3d;*/
+    /*backface-visibility: hidden;*/
+    /*transform-origin: center;*/
     pointer-events: auto;
     opacity: var(--opacity);
     display: flex;
