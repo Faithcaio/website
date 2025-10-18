@@ -1,0 +1,20 @@
+{
+  "name": "breh.me",
+  "version": "1.0.0",
+  "description": "Personal website with seasonal particle effects",
+  "author": "Anselm Brehme",
+  "license": "MIT",
+
+  "main": "./src/main.ts",
+
+  "scripts": {
+    "build": "tsc",
+    "watch": "webpack -w"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^6.0.0",
+    "ts-loader": "^9.4.2"
+  }
+}
