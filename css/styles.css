@@ -1,0 +1,86 @@
+body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+            linear-gradient(to bottom,
+                                #0a0a1a 0%,
+                                #1a1a3a 70%,
+                                #1a1a3a 75%,
+                                #0a2a1a 80%,
+                                #0a1a0a 82%,
+                                #0a1a0a 100%);
+    color: rgb(64, 188, 0);
+    text-shadow: 0 0 1px black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100vh;
+}
+
+a {
+    color: inherit;
+    text-decoration: inherit;
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+
+h1, p {
+    user-select: none;
+}
+
+.particle {
+    border-radius: 20px;
+    width: 40px;
+    height: 40px;
+
+    --rotation: 0deg;
+    --scale: 1;
+    --x: 0;
+    --y: 0;
+    --opacity: 1;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -10;
+    will-change: transform, opacity;
+    cursor: grab;
+    transform:
+        translate3d(
+            calc(var(--x, 0) * 1px),
+            calc(var(--y, 0) * 1px),
+            0)
+        translate(-50%, -50%)
+        rotate(var(--rotation))
+        scale(var(--scale));
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    transform-origin: center;
+    pointer-events: auto;
+    opacity: var(--opacity);
+    display: flex;
+
+
+    svg {
+        display: block;
+        margin: auto;
+    }
+
+    svg path {
+        stroke-width: 0.25;
+        vector-effect: non-scaling-stroke;
+    }
+
+    &:hover {
+        border: 1px solid rgba(1, 65, 114, 0.3);
+    }
+
+    &.grabbed {
+        cursor: grabbing;
+        border: 0;
+    }
+}
