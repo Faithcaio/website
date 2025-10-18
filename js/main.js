@@ -15,12 +15,12 @@ for (const [season, seasonMonths] of Object.entries(seasonMap)) {
 }
 
 const particleDensity = {
-    spring: 15,
-    summer: 20,
-    autumn: 25,
-    winter: 35  // More particles in winter for a snowier effect
+    spring: 30,
+    summer: 30,
+    autumn: 30,
+    winter: 40  // More particles in winter for a snowier effect
 };
-const spawnIntervalJitter = 10000; // Time between spawning new leaves in milliseconds
+const spawnIntervalJitter = 15000; // Time between spawning new leaves in milliseconds
 const referenceWindowArea = 1920 * 900;
 let targetParticleCount = updateTargetParticleCount();
 
@@ -203,13 +203,19 @@ class Particle {
             }
         }
 
+        let x = this.x - 20;
+        let y = this.y - 20;
         // Apply transformations using CSS custom properties for better performance
-        this.element.style.setProperty('--x', `${Math.round(this.x * 100) / 100}px`);
-        this.element.style.setProperty('--y', `${Math.round(this.y * 100) / 100}px`);
-        this.element.style.setProperty('--opacity', Math.round(this.opacity * 1000) / 1000);
-        this.element.style.setProperty('--rotation', `${Math.round(this.rotation)}deg`);
-        this.element.style.setProperty('--scale', Math.round(this.scale * 1000) / 1000);
+        this.element.style.setProperty('--x', `${round(x, 2)}px`);
+        this.element.style.setProperty('--y', `${round(y, 2)}px`);
+        this.element.style.setProperty('--opacity', `${round(this.opacity, 3)}`);
+        this.element.style.setProperty('--rotation', `${round(this.rotation)}deg`);
+        this.element.style.setProperty('--scale', `${round(this.scale,3)}`);
     }
+}
+
+function round(n, p = 0) {
+    return Math.round(n * Math.pow(10, p)) / Math.pow(10, p);
 }
 
 function createParticle() {
