@@ -13,14 +13,16 @@ for (const [season, seasonMonths] of Object.entries(seasonMap)) {
         break;
     }
 }
-const particleCounts = {
+
+const particleDensity = {
     spring: 15,
     summer: 20,
     autumn: 25,
     winter: 35  // More particles in winter for a snowier effect
 };
-const particleCount = particleCounts[currentSeason];
 const spawnIntervalJitter = 10000; // Time between spawning new leaves in milliseconds
+const referenceWindowArea = 1920 * 900;
+let targetParticleCount = updateTargetParticleCount();
 
 const seasonalColors = {
     spring: [
@@ -94,6 +96,14 @@ class Particle {
     }
 
     reset() {
+        if (particles.length > targetParticleCount) {
+            const index = particles.indexOf(this);
+            if (index > -1) {
+                particles.splice(index, 1);
+            }
+            this.element.remove();
+            return;
+        }
         this.x = Math.random() * (window.innerWidth - 50);
         this.y = -10 - Math.random() * 30; // Start above the viewport
         this.rotation = Math.random() * 360;
@@ -194,26 +204,99 @@ class Particle {
         }
 
         // Apply transformations using CSS custom properties for better performance
-        this.element.style.setProperty('--x', `${Math.round(this.x)}px`);
-        this.element.style.setProperty('--y', `${Math.round(this.y)}px`);
+        this.element.style.setProperty('--x', `${Math.round(this.x * 100) / 100}px`);
+        this.element.style.setProperty('--y', `${Math.round(this.y * 100) / 100}px`);
         this.element.style.setProperty('--opacity', Math.round(this.opacity * 1000) / 1000);
         this.element.style.setProperty('--rotation', `${Math.round(this.rotation)}deg`);
         this.element.style.setProperty('--scale', Math.round(this.scale * 1000) / 1000);
     }
 }
 
+function createParticle() {
+    const particleElement = document.createElement('div');
+    particleElement.className = 'particle';
+
+    const shape = currentShapes[Math.floor(Math.random() * currentShapes.length)];
+
+    // Create SVG element
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', shape.width);
+    svg.setAttribute('height', shape.height);
+    svg.setAttribute('viewBox', `0 0 ${shape.width} ${shape.height}`);
+
+    // Create defs and gradient
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
+    const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    gradient.setAttribute('id', gradientId);
+    gradient.setAttribute('x1', '0%');
+    gradient.setAttribute('y1', '0%');
+    gradient.setAttribute('x2', '100%');
+    gradient.setAttribute('y2', '100%');
+
+    // Add gradient stops
+    const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop1.setAttribute('offset', '0%');
+    let randomColor1 = currentColors[Math.floor(Math.random() * currentColors.length)];
+    stop1.setAttribute('stop-color', randomColor1);
+
+    const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop2.setAttribute('offset', '100%');
+    let randomColor2 = currentColors[Math.floor(Math.random() * currentColors.length)];
+    stop2.setAttribute('stop-color', randomColor2);
+
+    gradient.appendChild(stop1);
+    gradient.appendChild(stop2);
+    defs.appendChild(gradient);
+    svg.appendChild(defs);
+
+    // Create path element
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', shape.path);
+    path.setAttribute('fill', `url(#${gradientId})`);
+    path.setAttribute('stroke', randomColor1);
+
+    svg.appendChild(path);
+    particleElement.appendChild(svg);
+    document.body.appendChild(particleElement);
+
+    // Create particle instance and add to array
+    const particle = new Particle(particleElement);
+    particles.push(particle);
+
+    // Add event listeners
+    particleElement.addEventListener('mousedown', (e) => onClickParticle(e, particle));
+
+    return particle;
+}
+
+
+
+function updateTargetParticleCount() {
+    return Math.round(particleDensity[currentSeason] * (window.innerWidth * window.innerHeight) / referenceWindowArea);
+}
+
+
+function fillupParticles() {
+    targetParticleCount = updateTargetParticleCount();
+    let startCount = particles.length
+    if (targetParticleCount - startCount > 0) {
+        console.log(`Spawning ${targetParticleCount - startCount} particles`)
+        for (let i = startCount; i < targetParticleCount; i++) {
+            const jitter = Math.random() * spawnIntervalJitter;
+            setTimeout(createParticle, jitter);
+        }
+    }
+    setTimeout(fillupParticles, spawnIntervalJitter + 10)
+}
+
+fillupParticles();
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     let lastTime = 0;
     let animationFrameId;
-
-    function isOutOfView(particle) {
-        // Since we're using transform for positioning, we can check the particle's coordinates directly
-        return (
-            particle.x < -50 ||
-            particle.x > window.innerWidth + 50 ||
-            particle.y > window.innerHeight + 50
-        );
-    }
 
     // Function to update all particles
     function updateParticles(timestamp) {
@@ -224,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const particle of particles) {
             particle.update(deltaTime);
         }
-        
+
         animationFrameId = requestAnimationFrame(updateParticles);
     }
 
@@ -237,69 +320,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelAnimationFrame(animationFrameId);
         }
     });
-
-    function createParticle() {
-        const particleElement = document.createElement('div');
-        particleElement.className = 'particle';
-        
-        const shape = currentShapes[Math.floor(Math.random() * currentShapes.length)];
-        
-        // Create SVG element
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', shape.width);
-        svg.setAttribute('height', shape.height);
-        svg.setAttribute('viewBox', `0 0 ${shape.width} ${shape.height}`);
-        
-        // Create defs and gradient
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
-        const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-        gradient.setAttribute('id', gradientId);
-        gradient.setAttribute('x1', '0%');
-        gradient.setAttribute('y1', '0%');
-        gradient.setAttribute('x2', '100%');
-        gradient.setAttribute('y2', '100%');
-        
-        // Add gradient stops
-        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop1.setAttribute('offset', '0%');
-        let randomColor1 = currentColors[Math.floor(Math.random() * currentColors.length)];
-        stop1.setAttribute('stop-color', randomColor1);
-        
-        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop2.setAttribute('offset', '100%');
-        let randomColor2 = currentColors[Math.floor(Math.random() * currentColors.length)];
-        stop2.setAttribute('stop-color', randomColor2);
-
-        gradient.appendChild(stop1);
-        gradient.appendChild(stop2);
-        defs.appendChild(gradient);
-        svg.appendChild(defs);
-        
-        // Create path element
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', shape.path);
-        path.setAttribute('fill', `url(#${gradientId})`);
-        path.setAttribute('stroke', randomColor1);
-
-        svg.appendChild(path);
-        particleElement.appendChild(svg);
-        document.body.appendChild(particleElement);
-        
-        // Create particle instance and add to array
-        const particle = new Particle(particleElement);
-        particles.push(particle);
-        
-        // Add event listeners
-        particleElement.addEventListener('mousedown', (e) => onClickParticle(e, particle));
-        
-        return particle;
-    }
-
-    for (let i = 0; i < particleCount; i++) {
-        const jitter = Math.random() * spawnIntervalJitter;
-        setTimeout(createParticle, jitter);
-    }
 });
 
 function onClickParticle(e, particle) {
