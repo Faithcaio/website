@@ -36,6 +36,7 @@ h1, p {
     flex-direction: column;
 }
 
+
 .particle {
     border-radius: 20px;
     width: 40px;
@@ -46,6 +47,8 @@ h1, p {
     --x: 0;
     --y: 0;
     --opacity: 1;
+    --gradient-color1: blue;
+    --gradient-color2: red;
 
     position: fixed;
     left: var(--x);
@@ -60,16 +63,23 @@ h1, p {
     opacity: var(--opacity);
     display: flex;
 
-
     svg {
         display: block;
         margin: auto;
+        stop:first-of-type {
+            stop-color: var(--gradient-color1);
+        }
+        stop:nth-of-type(2) {
+            stop-color: var(--gradient-color2);;
+        }
+        path {
+            stroke-width: 0.25;
+            vector-effect: non-scaling-stroke;
+            stroke: var(--gradient-color1);
+        }
     }
 
-    svg path {
-        stroke-width: 0.25;
-        vector-effect: non-scaling-stroke;
-    }
+
     border: 1px solid transparent;
 
     &:hover {

@@ -1,10 +1,10 @@
-import SEASONS from './seasons'
+import {ParticleSetting, Season, SEASONS } from "./seasons";
 
 const today = new Date();
 const month = today.getMonth();
 
 
-let currentSeason;
+let currentSeason: Season;
 for (const [name, season] of Object.entries(SEASONS)) {
     if (season.months.includes(month)) {
         currentSeason = season;
@@ -54,8 +54,9 @@ class Particle {
         while (this.element.firstChild) {
             this.element.removeChild(this.element.firstChild);
         }
-        let particleSettings = currentSeason.particles[0];
-        const svg = createSvgElement(particleSettings.shapes, particleSettings.colors);
+        let particleSetting = currentSeason.particles[0];
+        const svg = createSvgElement(particleSetting);
+
         this.element.appendChild(svg);
 
         this.x = Math.random() * (window.innerWidth - 50);
@@ -80,9 +81,15 @@ class Particle {
         // Make sure we don't stop too close to the bottom
         this.stopY = Math.min(this.stopY, viewportHeight * 0.9);
         this.targetRotation = undefined;
+
+
+        const color1 = particleSetting.colors[Math.floor(Math.random() * particleSetting.colors.length)];
+        const color2 = particleSetting.colors[Math.floor(Math.random() * particleSetting.colors.length)];
+        this.element.style.setProperty('--gradient-color1', color1);
+        this.element.style.setProperty('--gradient-color2', color2);
     }
 
-    update(deltaTime) {
+    update(deltaTime: number) {
 
         deltaTime /= 1000;
         this.time += deltaTime
@@ -172,49 +179,56 @@ function round(n, p = 0) {
     return Math.round(n * Math.pow(10, p)) / Math.pow(10, p);
 }
 
-function createSvgElement(shapes, colors) {
-    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+const CACHED_SVG_SHAPES = new Map<string, SVGElement>();
 
-    // Create SVG element
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', shape.width);
-    svg.setAttribute('height', shape.height);
-    svg.setAttribute('viewBox', `0 0 ${shape.width} ${shape.height}`);
+function createSvgElement(pSettings: ParticleSetting) {
+    // TODO caching?
+    const shape = pSettings.shapes[Math.floor(Math.random() * pSettings.shapes.length)];
+    let svg = CACHED_SVG_SHAPES.get(shape.path);
+    if (!svg) {
+        // Create SVG element
+        svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', `${shape.width}`);
+        svg.setAttribute('height', `${shape.height}`);
+        svg.setAttribute('viewBox', `0 0 ${shape.width} ${shape.height}`);
 
-    // Create defs and gradient
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
-    const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-    gradient.setAttribute('id', gradientId);
-    gradient.setAttribute('x1', '0%');
-    gradient.setAttribute('y1', '0%');
-    gradient.setAttribute('x2', '100%');
-    gradient.setAttribute('y2', '100%');
+        // Create defs and gradient
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
+        const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+        gradient.setAttribute('id', gradientId);
+        gradient.setAttribute('x1', '0%');
+        gradient.setAttribute('y1', '0%');
+        gradient.setAttribute('x2', '100%');
+        gradient.setAttribute('y2', '100%');
 
-    // Add gradient stops
-    const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-    stop1.setAttribute('offset', '0%');
-    let randomColor1 = colors[Math.floor(Math.random() * colors.length)];
-    stop1.setAttribute('stop-color', randomColor1);
+        // Add gradient stops
+        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop1.setAttribute('offset', '0%');
+        stop1.setAttribute('stop-color', 'white');
 
-    const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-    stop2.setAttribute('offset', '100%');
-    let randomColor2 = colors[Math.floor(Math.random() * colors.length)];
-    stop2.setAttribute('stop-color', randomColor2);
+        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop2.setAttribute('offset', '100%');
+        stop2.setAttribute('stop-color', 'magenta');
 
-    gradient.appendChild(stop1);
-    gradient.appendChild(stop2);
-    defs.appendChild(gradient);
-    svg.appendChild(defs);
+        gradient.appendChild(stop1);
+        gradient.appendChild(stop2);
+        defs.appendChild(gradient);
+        svg.appendChild(defs);
 
-    // Create path element
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', shape.path);
-    path.setAttribute('fill', `url(#${gradientId})`);
-    path.setAttribute('stroke', randomColor1);
+        // Create path element
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', shape.path);
+        path.setAttribute('fill', `url(#${gradientId})`);
+        path.setAttribute('stroke', 'magenta');
 
-    svg.appendChild(path);
+        svg.appendChild(path);
+
+        // CACHED_SVG_SHAPES.set(shape.path, svg);
+    }
+
     return svg;
+
 }
 
 function spawnParticle() {
@@ -256,7 +270,6 @@ fillupParticles();
 
 document.addEventListener('DOMContentLoaded', () => {
     let lastTime = 0;
-    let animationFrameId;
 
     // Function to update all particles
     function updateParticles(timestamp) {
@@ -268,21 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
             particle.update(deltaTime);
         }
 
-        animationFrameId = requestAnimationFrame(updateParticles);
+        requestAnimationFrame(updateParticles);
     }
 
-    // Start the particle update loop
     updateParticles(0);
-
-    // Clean up animation frame on page unload
-    window.addEventListener('beforeunload', () => {
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-        }
-    });
 });
 
-function onClickParticle(e, particle) {
+function onClickParticle(e: MouseEvent, particle) {
     if (e.button !== 0) return; // Only left mouse button
 
     e.preventDefault();

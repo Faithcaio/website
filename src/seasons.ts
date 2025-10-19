@@ -44,31 +44,31 @@ const leafShapes = [
     }
 ];
 
-class Season {
+export class Season {
     constructor(name: string, months: number[], particles: ParticleSetting[]) {
         this.name = name
         this.months = months
         this.particles = particles
     }
 
-    name;
-    months;
-    particles;
+    name: string;
+    months: number[];
+    particles: ParticleSetting[];
 }
 
-class ParticleSetting {
+export class ParticleSetting {
     constructor(density: number, shapes: { path: string; width: number; height: number; }[], colors: string[]) {
         this.density = density
         this.shapes = shapes
         this.colors = colors
     }
 
-    density;
-    shapes;
-    colors
+    density: number;
+    shapes: { path: string; width: number; height: number; }[];
+    colors: string[]
 }
 
-export default {
+const SEASONS = {
     spring: new Season('spring', [2, 3, 4], [
         new ParticleSetting(30,
             leafShapes,
@@ -127,4 +127,8 @@ export default {
         )
 
     ]),
+}
+
+export {
+    SEASONS
 }
